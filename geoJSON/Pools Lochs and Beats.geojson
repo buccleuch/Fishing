@@ -45,7 +45,7 @@
 { "type": "Feature", "properties": { "id": null, "Name": "Start of Upper Beat", "Y-Coord": 600393.228, "Number": 12 }, "geometry": { "type": "Point", "coordinates": [ -3.798927749907761, 55.2843963383865 ] } },
 { "type": "Feature", "properties": { "id": null, "Name": "Start of Nith Linns", "Y-Coord": 603588.25, "Number": 1 }, "geometry": { "type": "Point", "coordinates": [ -3.796257603730372, 55.313149969090723 ] } },
 { "type": "Feature", "properties": { "id": null, "Name": "End of Nith Linns", "Y-Coord": 600593.24, "Number": 11 }, "geometry": { "type": "Point", "coordinates": [ -3.803343284760063, 55.286128735996179 ] } },
-{ "type": "Feature", "properties": { "id": null, "Name": "End of Upper Beat/Start of Middle Beat", "Y-Coord": 598960.516, "Number": 24 }, "geometry": { "type": "Point", "coordinates": [ -3.798932565932493, 55.27152014654903 ] } },
+{ "type": "Feature", "properties": { "id": null, "Name": "End of Upper Beat", "Y-Coord": 598960.516, "Number": 24 }, "geometry": { "type": "Point", "coordinates": [ -3.798932565932493, 55.27152014654903 ] } },
 { "type": "Feature", "properties": { "id": null, "Name": "End of Middle Beat", "Y-Coord": 597566.188, "Number": 35 }, "geometry": { "type": "Point", "coordinates": [ -3.78413926780091, 55.259206188086125 ] } },
 { "type": "Feature", "properties": { "id": null, "Name": "Start of Lower Beat", "Y-Coord": 597567.196, "Number": 34 }, "geometry": { "type": "Point", "coordinates": [ -3.783828549810832, 55.259219789430006 ] } },
 { "type": "Feature", "properties": { "id": null, "Name": "End of Lower Beat", "Y-Coord": 595488.52, "Number": 45 }, "geometry": { "type": "Point", "coordinates": [ -3.777402705568123, 55.240632013140292 ] } },
