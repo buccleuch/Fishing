@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>QB Fishing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+    <link rel="stylesheet" href="../styles/general.css">
+</head>
+
+<body>
+    <div id="title-banner">
+        <div id="top-title">
+            <h1>Fishing at Drumlanrig</h1>
+        </div>
+    </div>
+    <div id="map"></div>
+
+    <!-- Dropdown menu to choose markers -->
+    <div id="marker-dropdown" style="position: absolute; top: 180px; right: 10px;">
+        <select id="marker-select">
+            <option value="">Select a marker</option>
+            <!-- Options will be dynamically added here -->
+        </select>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script>
+        var map = L.map('map').setView([55.274074, -3.8083718], 14);
+        var mapLink = '<a href="http://www.esri.com/">Esri</a>';
+        var wholink = 'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+
+        var baselayers = {
+            "OSM": L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+            }),
+            "Aerial Imagery": L.tileLayer(
+                'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; ' + mapLink + ', ' + wholink,
+                maxZoom: 19,
+            })
+        };
+
+        baselayers["OSM"].addTo(map);
+
+        map.options.minZoom = 12;
+        map.options.maxZoom = 18;
+
+        // Create a custom icon
+        var customIcon = L.divIcon({
+            className: 'custom-marker',
+            iconSize: [14, 14] // size of the icon
+        });
+
+        // Layer groups for the beats
+        var beatLayers = {};
+
+        function addBeatLayer(url, layerName, style) {
+            $.getJSON(url, function (data) {
+                var layer = L.geoJSON(data, {
+                    style: style,
+                    onEachFeature: function (feature, layer) {
+                        layer.bindTooltip("<p>" + layerName + "</p>");
+                    }
+                });
+                beatLayers[layerName] = layer;
+                layer.addTo(map);
+            });
+        }
+
+        // Add beats to the map
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Boatford%20Beat.geojson", "Boatford Beat", { color: "green", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Upper%20Beat.geojson", "Upper Beat", { color: "red", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Middle%20Beat.geojson", "Middle Beat", { color: "orange", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Lower%20Beat.geojson", "Lower Beat", { color: "purple", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Ninth%20Linns.geojson", "Ninth Linns", { color: "blue", fillOpacity: 0.7 });
+
+        // Initialize an empty array to hold markers
+        var markers = [];
+
+        // Fetch the GeoJSON data
+        $.getJSON("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Pools%20Lochs%20and%20Beats.geojson", function (data) {
+            // Loop through each feature in the GeoJSON data
+            data.features.forEach(function (feature) {
+                // Check if the feature is a Point
+                if (feature.geometry.type === "Point") {
+                    // Create a marker for the point
+                    var marker = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], { icon: customIcon });
+                    // Bind a tooltip with the Name property
+                    marker.bindTooltip("<p>" + feature.properties.Name + "</p>");
+                    marker.bindPopup("<p>" + feature.properties.Name + "</p>"); // Bind popup
+                    markers.push(marker);
+
+                    // Add option to the dropdown menu
+                    var option = document.createElement("option");
+                    option.value = markers.length - 1; // Set value to index of marker in the markers array
+                    option.textContent = feature.properties.Name; // Set text to marker name
+                    document.getElementById("marker-select").appendChild(option);
+                }
+            });
+
+            // Create a marker cluster group
+            var markersCluster = L.markerClusterGroup();
+
+            // Add markers to the cluster group
+            markers.forEach(function (marker) {
+                markersCluster.addLayer(marker);
+                marker.on('click', function () {
+                    console.log("Marker clicked!");
+                    var popup = marker.getPopup();
+                    if (popup) {
+                        console.log("Popup Content:", popup.getContent()); // Log popup content
+                    } else {
+                        console.log("No popup associated with this marker.");
+                    }
+                    marker.openPopup();
+                    // Make the marker flash
+                    var count = 0;
+                    var flashingInterval = setInterval(function () {
+                        if (count % 2 === 0) {
+                            marker.setOpacity(1);
+                        } else {
+                            marker.setOpacity(0.5);
+                        }
+                        count++;
+                        if (count >= 4) { // Flash 6 times
+                            clearInterval(flashingInterval);
+                            marker.setOpacity(1); // Reset opacity
+                        }
+                    }, 500); // Flash every 500ms
+                });
+                marker.on('mouseover', function (e) {
+                    marker.openTooltip();
+                });
+                marker.on('mouseout', function (e) {
+                    marker.closeTooltip();
+                });
+            });
+            // Add the marker cluster group to the map
+            map.addLayer(markersCluster);
+        });
+
+        // Add layer control
+        L.control.layers(baselayers).addTo(map);
+
+        // Create a custom control
+        var buccleuchWebsite = L.Control.extend({
+            options: {
+                position: 'bottomright'
+            },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'buccleuch-button');
+                var link = document.createElement('a'); // Create an anchor element
+                link.href = 'https://www.drumlanrigcastle.co.uk/outdoor-activities/fishing/';
+                link.target = '_blank'; // Open link in a new tab
+                link.style.display = 'block'; // Make the anchor element a block element to cover the whole image
+                var img = document.createElement('img');
+                img.src = 'http://buccleuch-survey.co.uk/logos/Queensberry.jpg';
+                img.alt = 'Buccleuch Logo'; // Alt text for accessibility
+                img.style.width = '110px'; // Adjust width as needed
+                img.style.height = '65px'; // Adjust height as needed
+                link.style.borderRadius = '20%'; // Add rounded corners
+                // Set background color and border for the image container
+                link.style.backgroundColor = 'white';
+                link.style.border = '2px solid black';
+                link.style.padding = '10px';
+                link.appendChild(img); // Append the image to the anchor element
+                container.appendChild(link); // Append the anchor element to the container
+
+                return container;
+            }
+        });
+
+        // Add the custom control to the map
+        map.addControl(new buccleuchWebsite());
+
+        /*Legend specific*/
+        var legend = L.control({ position: "bottomleft" });
+
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create("div", "legend");
+            div.innerHTML += "<h4>Legend</h4>";
+            div.innerHTML += '<i style="background: #0000FF"></i><span>Ninth Linns</span><br>';
+            div.innerHTML += '<i style="background: #FF0000"></i><span>Upper Beat</span><br>';
+            div.innerHTML += '<i style="background: #FFA500"></i><span>Middle Beat</span><br>';
+            div.innerHTML += '<i style="background: #800080"></i><span>Lower Beat</span><br>';
+            div.innerHTML += '<i style="background: #008000"></i><span>Boatford Beat</span><br>';
+            return div;
+        };
+
+        legend.addTo(map);
+
+        // Define a function to handle legend item clicks
+        function zoomToFeature(layerName) {
+            var selectedLayer = beatLayers[layerName]; // Assuming beatLayers holds the GeoJSON layers
+            if (selectedLayer) {
+                map.fitBounds(selectedLayer.getBounds());
+            }
+        }
+
+        // Add event listeners to legend items to zoom to features
+        document.querySelectorAll('.legend span').forEach(function (legendItem) {
+            legendItem.addEventListener('click', function () {
+                var layerName = this.textContent; // Get the text content of the legend item
+                zoomToFeature(layerName);
+            });
+        });
+
+        // Add event listener to dropdown menu to zoom to selected marker
+        document.getElementById("marker-select").addEventListener("change", function () {
+            var selectedIndex = parseInt(this.value);
+            if (!isNaN(selectedIndex) && selectedIndex >= 0 && selectedIndex < markers.length) {
+                var selectedMarker = markers[selectedIndex];
+
+                // Zoom to selected marker
+                map.setView(selectedMarker.getLatLng(), 18);
+
+                // Open popup for selected marker
+                selectedMarker.bindPopup(selectedMarker.getTooltip().getContent()).openPopup();
+
+                // Make the marker flash
+                var count = 0;
+                var flashingInterval = setInterval(function () {
+                    if (count % 2 === 0) {
+                        selectedMarker.setOpacity(1);
+                    } else {
+                        selectedMarker.setOpacity(0.5);
+                    }
+                    count++;
+                    if (count >= 4) { // Flash 6 times
+                        clearInterval(flashingInterval);
+                        selectedMarker.setOpacity(1); // Reset opacity
+                    }
+                }, 500); // Flash every 500ms
+            }
+        });
+
+    </script>
+</body>
+
+</html>
