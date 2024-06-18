@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>QB Fishing</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css">
+
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            /* Prevent scrolling */
+        }
+
+        #map {
+            position: absolute;
+            top: 100px;
+            /* Adjust as needed based on the height of your title-banner */
+            bottom: 0;
+            width: 100%;
+            z-index: 0;
+            /* Ensure the map is behind other elements */
+        }
+
+        #title-banner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100px;
+            /* Adjust as needed */
+            background-color: #AD5389;
+            color: #fff;
+            padding: 1px 0;
+            text-align: center;
+            font-size: 24px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        /* Add this CSS to remove the blue outline on cluster icons */
+        .leaflet-cluster-anim .leaflet-marker-icon,
+        .leaflet-cluster-anim .leaflet-marker-shadow,
+        .leaflet-markercluster .leaflet-cluster {
+            border: none;
+        }
+
+        .custom-marker {
+            width: 10px;
+            height: 10px;
+            background-color: white;
+            border: 2px solid blue;
+            border-radius: 50%;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /*Legend specific*/
+        .legend {
+            padding: 6px 8px;
+            font: 14px Arial, Helvetica, sans-serif;
+            background: white;
+            background: rgba(255, 255, 255, 0.8);
+            /*box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);*/
+            /*border-radius: 5px;*/
+            line-height: 24px;
+            color: #555;
+        }
+
+        .legend h4 {
+            text-align: center;
+            font-size: 16px;
+            margin: 2px 12px 8px;
+            color: #777;
+        }
+
+        .legend span {
+            position: relative;
+            bottom: 3px;
+        }
+
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin: 0 8px 0 0;
+            opacity: 0.7;
+        }
+
+        .legend i.icon {
+            background-size: 18px;
+            background-color: rgba(255, 255, 255, 1);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="title-banner">
+        <div id="top-title">
+            <h1>Fishing at Drumlanrig</h1>
+        </div>
+    </div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+    <script>
+        var map = L.map('map').setView([55.274074, -3.8083718], 14);
+        var mapLink = '<a href="http://www.esri.com/">Esri</a>';
+        var wholink = 'i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+
+        var baselayers = {
+            "OSM": L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+            }),
+            "Aerial Imagery": L.tileLayer(
+                'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '&copy; ' + mapLink + ', ' + wholink,
+                maxZoom: 19,
+            })
+        };
+
+        baselayers["OSM"].addTo(map);
+
+        map.options.minZoom = 12;
+        map.options.maxZoom = 18;
+
+        // Create a custom icon
+        var customIcon = L.divIcon({
+            className: 'custom-marker',
+            iconSize: [14, 14] // size of the icon
+        });
+
+        // Layer groups for the beats
+        var beatLayers = {};
+
+        function addBeatLayer(url, layerName, style) {
+            $.getJSON(url, function (data) {
+                var layer = L.geoJSON(data, {
+                    style: style,
+                    onEachFeature: function (feature, layer) {
+                        layer.bindTooltip("<p>" + layerName + "</p>");
+                    }
+                });
+                beatLayers[layerName] = layer;
+                layer.addTo(map);
+            });
+        }
+
+        // Add beats to the map
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Boatford%20Beat.geojson", "Boatford Beat", { color: "green", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Upper%20Beat.geojson", "Upper Beat", { color: "red", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Middle%20Beat.geojson", "Middle Beat", { color: "orange", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Lower%20Beat.geojson", "Lower Beat", { color: "purple", fillOpacity: 0.7 });
+        addBeatLayer("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Beats/Ninth%20Linns.geojson", "Ninth Linns", { color: "blue", fillOpacity: 0.7 });
+
+        // Initialize an empty array to hold markers
+        var markers = [];
+
+        // Fetch the GeoJSON data
+        $.getJSON("https://raw.githubusercontent.com/buccleuch/Fishing/main/geoJSON/Pools%20Lochs%20and%20Beats.geojson", function (data) {
+            // Loop through each feature in the GeoJSON data
+            data.features.forEach(function (feature) {
+                // Check if the feature is a Point
+                if (feature.geometry.type === "Point") {
+                    // Create a marker for the point
+                    var marker = L.marker([feature.geometry.coordinates[1], feature.geometry.coordinates[0]], { icon: customIcon });
+                    // Bind a tooltip with the Name property
+                    marker.bindTooltip("<p>" + feature.properties.Name + "</p>");
+                    markers.push(marker);
+                }
+            });
+
+            // Create a marker cluster group
+            var markersCluster = L.markerClusterGroup();
+
+            // Add markers to the cluster group
+            markers.forEach(function (marker) {
+                markersCluster.addLayer(marker);
+            });
+
+            // Add the marker cluster group to the map
+            map.addLayer(markersCluster);
+        });
+
+        // Add layer control
+        L.control.layers(baselayers).addTo(map);
+
+        // Create a custom control
+        var buccleuchWebsite = L.Control.extend({
+            options: {
+                position: 'bottomright'
+            },
+            onAdd: function (map) {
+                var container = L.DomUtil.create('div', 'buccleuch-button');
+                var link = document.createElement('a'); // Create an anchor element
+                link.href = 'https://www.google.com'; // Set the href attribute to your desired link
+                link.target = '_blank'; // Open link in a new tab
+                link.style.display = 'block'; // Make the anchor element a block element to cover the whole image
+                var img = document.createElement('img');
+                img.src = 'https://raw.githubusercontent.com/buccleuch/Oakley-Bush-BESS/main/Buccleuch.jpg'; // Replace 'path/to/your/image.png' with the path to your image
+                img.alt = 'Buccleuch Logo'; // Alt text for accessibility
+                img.style.width = '80px'; // Adjust width as needed
+                img.style.height = '70px'; // Adjust height as needed
+                img.style.borderRadius = '20%'; // Add rounded corners
+                img.style.border = '2px solid black'; // Add black border
+                link.appendChild(img); // Append the image to the anchor element
+                container.appendChild(link); // Append the anchor element to the container
+
+                return container;
+            }
+        });
+
+        // Add the custom control to the map
+        map.addControl(new buccleuchWebsite());
+
+        /*Legend specific*/
+        var legend = L.control({ position: "bottomleft" });
+
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create("div", "legend");
+            div.innerHTML += "<h4>Legend</h4>";
+            div.innerHTML += '<i style="background: #0000FF"></i><span>Ninth Linns</span><br>';
+            div.innerHTML += '<i style="background: #FF0000"></i><span>Upper Beat</span><br>';
+            div.innerHTML += '<i style="background: #FFA500"></i><span>Middle Beat</span><br>';
+            div.innerHTML += '<i style="background: #800080"></i><span>Lower Beat</span><br>';
+            div.innerHTML += '<i style="background: #008000"></i><span>Boatford Beat</span><br>';
+            return div;
+        };
+
+        legend.addTo(map);
+
+        // Define a function to handle legend item clicks
+        function zoomToFeature(layerName) {
+            var selectedLayer = beatLayers[layerName]; // Assuming beatLayers holds the GeoJSON layers
+            if (selectedLayer) {
+                map.fitBounds(selectedLayer.getBounds());
+            }
+        }
+
+        // Add event listeners to legend items to zoom to features
+        document.querySelectorAll('.legend span').forEach(function (legendItem) {
+            legendItem.addEventListener('click', function () {
+                var layerName = this.textContent; // Get the text content of the legend item
+                zoomToFeature(layerName);
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>
